@@ -9,16 +9,25 @@ const chatbox = () => {
     const [input, setInput] = useState('')
     const [room, setRoom] = useState('')
     const [userId, setUserId] = useState('')
+    const [hasJoinedRoom, setHasJoinedRoom] = useState(false)
+
     useEffect(() => {
         // establish socket connection
         dispatch(setSocketConnection(true))
     }, [dispatch])
 
+    useEffect(() => {
+        if (hasJoinedRoom) {
+            // join the room
+            dispatch(joinRoomSuccess(room, userId))
+        }
+    }, [hasJoinedRoom, dispatch, room, userId])
+
     //handle joining room
     const handleJoinRoom = () => {
         if (room && userId) {
             // join the room
-            dispatch(joinRoomSuccess(room, userId))
+            setHasJoinedRoom(true)
         } else {
             // handle error
             alert('Please enter a valid room and userId')
@@ -35,6 +44,14 @@ const chatbox = () => {
             // handle error
             alert('Please enter a valid message')
         }
+    }
+
+    const clearChatState = () => {
+        // clear the chat state
+        setHasJoinedRoom(false)
+        setRoom('')
+        setUserId('')
+        setInput('')
     }
 
     return (

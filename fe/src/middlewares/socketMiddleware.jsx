@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { addMessage, setSocketConnection, joinRoomSuccess } from '../actions/chatActions';
+import { addMessage, setSocketConnection, joinRoomSuccess, sendMessage } from '../actions/chatActions';
 
 const socketMiddleware = (store) => {
     let socket;
@@ -19,8 +19,12 @@ const socketMiddleware = (store) => {
                     // When a new message is received from the server,
                     // add it to the chat messages in the store
                     socket.on('message', (message) => {
-                        store.dispatch(addMessage(message));
+                        console.log('Received message:', `${message.userId} has joined the room`);
+                        if (message.text !== (`${message.userId} has joined the room`) || `${undefined} has joined the room` ) {
+                            store.dispatch(addMessage(message));
+                        }
                     });
+
                 }
                 break;
 
@@ -29,7 +33,6 @@ const socketMiddleware = (store) => {
                 // join the room on the socket server
                 const { room, userId } = action.payload;
                 socket.emit('joinRoom', { room, userId });
-                store.dispatch(joinRoomSuccess(room));
                 break;
 
             case 'SEND_MESSAGE':
