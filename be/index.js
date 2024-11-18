@@ -2,8 +2,20 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 
-const app = express();
+const app = express(); // express app
+const cors = require('cors'); // cors middleware
+require("./configs/db"); // database configuration
 app.use(express.json());
+app.use(cors()); // enable cors middleware for all routes
+
+const authController = require('./controllers/authController');
+app.use('/auth', authController);
+const userController = require('./controllers/userController');
+app.use('/users', userController);
+const chatController = require('./controllers/chatController');
+app.use('/chats', chatController);
+const messageController = require('./controllers/messageController');
+app.use('/messages', messageController);
 
 const socketServer = http.createServer(app);
 
