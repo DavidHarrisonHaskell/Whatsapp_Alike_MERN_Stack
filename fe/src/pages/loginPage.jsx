@@ -5,14 +5,14 @@ import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
 
-    const login_URL = 'http://127.0.0.1:8000/auth/login'
+    const login_URL = 'http://127.0.0.1:5000/auth/login'
     const navigate = useNavigate()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const login = async () => {
         try {
             const response = await axios.post(login_URL, {
-                email: username,
+                email: email,
                 password: password
             })
             if (response.data.success) {
@@ -23,6 +23,9 @@ const Login = () => {
                 sessionStorage.setItem('admin', response.data.admin)
                 sessionStorage.setItem('name', response.data.name)
                 sessionStorage.setItem('id', response.data.id)
+                console.log("Login Successful")
+                console.log("response.data", response.data)
+                navigate('/')
             } else {
                 alert(response.data.error)
             }
@@ -47,7 +50,7 @@ const Login = () => {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} /><br />
             <button className='LoginButton' onClick={login}>Login</button>
             <label className="newUser"> New User?
-                <a className="register" href="/new-user-registration" > Register</a>
+                <a className="register" href="/register" > Register</a>
             </label>
         </div>
     )

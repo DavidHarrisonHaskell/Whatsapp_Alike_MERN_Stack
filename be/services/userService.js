@@ -1,7 +1,14 @@
 
 const userRepository = require('../repositories/userRepository');
-const getUserById = (id) => {
-    return userRepository.getUserById(id);
+const chatRepository = require('../repositories/chatRepository');
+const getUserInformation = (id) => {
+    // const user = userRepository.getUserById(id);
+    const users = userRepository.getAllUsers();
+    // find users who have chats with the given user
+    // const chats = chatRepository.getChatsByUserId(id);
+    // const friends = users.filter((u) => chats.some((c) => c.user_id === u._id));
+    return users
+    // TODO: fix this function
 };
 
 const getAllUsers = () => {
@@ -9,6 +16,6 @@ const getAllUsers = () => {
 };
 
 module.exports = {
-    getUserById,
+    getUserInformation,
     getAllUsers
 };

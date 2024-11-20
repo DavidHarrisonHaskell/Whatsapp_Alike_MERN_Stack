@@ -16,16 +16,16 @@ require('dotenv').config();
 
 Router.get('/:id', verifyUser, async (req, res) => {
     try {
-        const user = await userService.getUserById(req.params.id);
+        const userInformation = await userService.getUserInformation(req.params.id);
         // TODO: develop the getUserById function
-        res.status(200).json({ success: true, user: user });
+        res.status(200).json({ success: true, userInformation: user });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: error.message });
     }
 })
 
-Router.get('/', async (req, res) => {
+Router.get('/', verifyUser, async (req, res) => {
     try {
         const users = await userService.getAllUsers();
         res.status(200).json({ success: true, users: users });
