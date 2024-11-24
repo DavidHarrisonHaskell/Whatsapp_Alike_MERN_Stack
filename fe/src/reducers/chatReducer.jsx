@@ -28,6 +28,26 @@ export const fetchChats = ({ id }) => async dispatch => {
         dispatch(fetchChatsFailure(error.message));
     }
 }
+
+export const addChat = ({ participants }) => async dispatch => {
+    dispatch(addChatStart())
+    const the_participants = participants
+    console.log("participants", participants);
+    try {
+        console.log("all is good...")
+        const token = sessionStorage.getItem('token')
+        const response = await axios.post('http://127.0.0.1:5000/chats/new-chat', { "participants": the_participants }, {
+            headers: {
+                token: token
+            }
+        });
+        console.log("response.data for add chat", response.data)
+        dispatch((addChatSuccess(response.data)))
+    } catch (e) {
+        dispatch(addChatFailure(e.response));
+    }
+}
+
 const chatsSlice = createSlice({
     name: "chats",
     initialState,
@@ -36,17 +56,25 @@ const chatsSlice = createSlice({
             state.status = "loading";
         },
         fetchChatsSuccess: (state, action) => {
-            console.log("state before fetchChatsStart", state.items)
-
             state.status = "succeeded";
             state.items = action.payload.chats;
-            console.log("state after fetchChatsSuccess", state.items)
         },
         fetchChatsFailure: (state, action) => {
             state.status = "failed";
             state.error = action.payload;
+        },
+        addChatStart: (state) => {
+            state.status = "loading";
+        },
+        addChatSuccess: (state, action) => {
+            state.status = "succeeded";
+            state.items.push(action.payload.chat);
+        },
+        addChatFailure: (state, action) => {
+            state.status = "failed";
+            console.log("addChatFailure", action.payload?.message)
+            state.error = action.payload;
         }
-        // possible to add more reducers for other actions like adding, updating, deleting users
     }
 });
 
@@ -54,7 +82,10 @@ const chatsSlice = createSlice({
 export const {
     fetchChatsStart,
     fetchChatsSuccess,
-    fetchChatsFailure
+    fetchChatsFailure,
+    addChatStart,
+    addChatSuccess,
+    addChatFailure
 } = chatsSlice.actions;
 
 export default chatsSlice.reducer;

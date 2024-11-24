@@ -33,8 +33,7 @@ router.get('/:id', verifyUser, async (req, res) => {
     try {
         const { id } = req.params;
         const chats = await chatService.getChatsByUserId(id);
-        console.log(chats);
-        res.status(200).json({ success: true, chats });
+         res.status(200).json({ success: true, chats });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, message: error.message });

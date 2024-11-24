@@ -1,13 +1,56 @@
 .chatPage {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+
+}
+
+.chatBox {
+    flex: 2;
+    height: 600px;
+    overflow-y: auto;
+    width: 100%;
+    margin: 10px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+                0 6px 20px 0 rgba(0, 0, 0, 0.2);
+                background-color: #fff;
+                overflow-y: auto;
+    border: 1px solid black;
+}
+
+.chattingSection {
+    /* flex: 1; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    width: 100%;
 }
 
 .searchBar {
+    flex: 1 ;
+    border: 1px solid black;
+    margin: 10px;
+    height: 600px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+                0 6px 20px 0 rgba(0, 0, 0, 0.2);
+                background-color: #fff;
+}
+
+.searchBar div {
     padding: 10px;
-    margin-right: 10px;
+    margin: 10px;
     border-radius: 5px;
     border: 1px solid black;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
