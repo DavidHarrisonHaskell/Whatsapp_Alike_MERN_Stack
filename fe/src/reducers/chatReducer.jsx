@@ -48,6 +48,24 @@ export const addChat = ({ participants }) => async dispatch => {
     }
 }
 
+// TODO: make a sendMessage function
+export const  sendMessage = ({ sender, chatId, content }) => async dispatch => {
+    console.log("sender", sender, "chatId", chatId, "content", content);
+    dispatch(sendMessageStart());
+    try {
+        const token = sessionStorage.getItem("token");
+        const response = await axios.post(`http://127.0.0.1:5000/messages/new-message`, { "sender": sender, "chatId": chatId, "content": content }, {
+            headers: {
+                token: token,
+            },
+        });
+        console.log("response.data for sendMessage", response.data)
+        dispatch(sendMessageSuccess(response.data));
+    } catch (e) {
+        dispatch(sendMessageFailure(e.response));
+    }
+}
+
 const chatsSlice = createSlice({
     name: "chats",
     initialState,
@@ -74,6 +92,26 @@ const chatsSlice = createSlice({
             state.status = "failed";
             console.log("addChatFailure", action.payload?.message)
             state.error = action.payload;
+        },
+        sendMessageStart: (state) => {
+            state.status = "loading";
+        },
+        sendMessageSuccess: (state, action) => {
+            state.status = "succeeded";
+            state.items.find(item => {
+                const chat = item._id === action.payload.message.chatId;
+                console.log("item", item, "chat", chat)
+                console.log("item._id", item._id, "action.payload.message.chatId", action.payload.message.chatId)
+                if (chat) {
+                    item.messages.push(action.payload.message);
+                }
+            })            
+            // state.items.push(action.payload.message);
+        },
+        sendMessageFailure: (state, action) => {
+            state.status = "failed";
+            console.log("sendMessageFailure", action.payload?.message)
+            state.error = action.payload;
         }
     }
 });
@@ -85,7 +123,10 @@ export const {
     fetchChatsFailure,
     addChatStart,
     addChatSuccess,
-    addChatFailure
+    addChatFailure,
+    sendMessageStart,
+    sendMessageSuccess,
+    sendMessageFailure
 } = chatsSlice.actions;
 
 export default chatsSlice.reducer;

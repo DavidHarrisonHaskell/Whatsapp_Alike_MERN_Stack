@@ -8,7 +8,6 @@ const getUserInformation = (id) => {
     // const chats = chatRepository.getChatsByUserId(id);
     // const friends = users.filter((u) => chats.some((c) => c.user_id === u._id));
     return users
-    // TODO: fix this function
 };
 
 const getAllUsers = () => {

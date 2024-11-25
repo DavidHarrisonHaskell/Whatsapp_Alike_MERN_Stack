@@ -1,11 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchUserInformation } from "../reducers/usersReducer";
-import { fetchChats, addChat } from "../reducers/chatReducer";
+import { fetchChats, addChat, sendMessage } from "../reducers/chatReducer";
 import { useEffect, useState, useRef } from "react";
 import { Button } from 'react-bootstrap'
 import LayoutHeader from '../components/LayoutHeader';
 import "./chatPage.css";
+import moment from 'moment';
+
 const chatPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -14,6 +16,9 @@ const chatPage = () => {
     const [search, setSearch] = useState('')
     const id = sessionStorage.getItem('id');
     const initialActiveChatSet = useRef(false)
+    const [selectedUserId, setSelectedUserId] = useState(null)
+    const [message, setMessage] = useState('');
+    const messagesEndRef = useRef(null)
 
     console.log("id", id);
     console.log("typeof id", typeof (id));
@@ -60,16 +65,45 @@ const chatPage = () => {
             setActiveChat(usersWithActiveChats[0])
             initialActiveChatSet.current = true;
             findSelectedChat(usersWithActiveChats[0]._id, id)
+            setSelectedUserId(usersWithActiveChats[0]._id)
 
         }
     }, [usersWithActiveChats, activeChat]);
 
+
+    useEffect(() => {
+        // Scroll to the bottom of the messages container whenever messages change
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [chats, activeChat]);
 
     const findSelectedChat = (loggedInUser, selectedUser) => {
         const selectedChat = chats.find(chat => {
             return chat.participants.includes(loggedInUser) && chat.participants.includes(selectedUser) && chat.participants.length == 2
         })
         return selectedChat
+    }
+
+    const formatDate = (timestamp) => {
+        // format the timestamp to a readable date and time string
+        const current = moment()
+        const difference = current.diff(moment(timestamp), 'days')
+        if (difference === 0) {
+            return moment(timestamp).format('hh:mm A')
+        }
+        if (difference === 1) {
+            return `Yesterday ${moment(timestamp).format('hh:mm A')}`
+        }
+        return moment(timestamp).format('MMM D, hh:mm A')
+    }
+
+    const selectedChat = findSelectedChat(activeChat?._id, id);
+    const messages = selectedChat?.messages;
+
+    const findMessageSender = (senderId) => {
+        const sender = usersInformation.find(user => user._id === senderId)
+        return sender ? sender.name : 'Unknown'
     }
 
     const logout = () => {
@@ -81,6 +115,9 @@ const chatPage = () => {
         console.log("chats", chats)
         const information = chats.find(chat => chat._id === activeChat._id)
         console.log("information", information);
+        console.log("activeChat", activeChat)
+        console.log("selectedChat", selectedChat)
+        return information
     }
 
     const startNewChat = (currentUserId, otherUserId) => {
@@ -101,7 +138,32 @@ const chatPage = () => {
         // navigate(`/chat/${otherUserId}`);
     }
 
+    const sendNewMessage = () => {
+        if (message.trim() === '') {
+            alert('Please enter a message to send.');
+            return;
+        }
+
+        dispatch(sendMessage({
+            "sender": activeChat._id,
+            "chatId": selectedChat._id,
+            "content": message
+        }));
+        setMessage('');
+
+    }
+
+    const getLastMessage = (userId) => {
+        const chat = chats.find(chat => chat.participants.includes(userId) && chat.participants.includes(id) && chat.participants.length === 2);
+        if (chat && chat.messages && chat.messages.length > 0) {
+            return chat.messages[chat.messages.length - 1].content;
+        }
+        return "No messages";
+    };
+
     const filteredUsersWithNonActiveChats = usersWithNonActiveChats.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()));
+
+    const isActiveChatInActiveUsers = usersWithActiveChats.some(user => user._id === activeChat?._id);
 
     return (
         <div className="chatPage">
@@ -120,18 +182,35 @@ const chatPage = () => {
                     {
                         usersWithActiveChats.map((user, index) => {
                             return (
-                                <div key={index} className="usersWithActiveChats" onClick={() => setActiveChat(user)}>
+                                <div
+                                    key={index}
+                                    onClick={() => {
+                                        setActiveChat(user)
+                                        setSelectedUserId(user._id)
+                                    }}
+                                    className={selectedUserId === user._id ? 'greenBackground' : 'regularBackground'}
+                                >
                                     <h2>{user.name}</h2>
                                     <label>{user.email}</label><br /><br />
+                                    <p>{`${getLastMessage(user._id).substring(0,30)}...`}</p>
+                                    
                                 </div>)
                         })
                     }
+
 
                     <u>Users - Non-Active Chats</u>
                     {
                         filteredUsersWithNonActiveChats.map((user, index) => {
                             return (
-                                <div key={index} className="usersWithNonActiveChats" onClick={() => setActiveChat(user)}>
+                                <div
+                                    key={index}
+                                    onClick={() => {
+                                        setActiveChat(user)
+                                        setSelectedUserId(user._id)
+                                    }}
+                                    className={selectedUserId === user._id ? 'greenBackground' : 'regularBackground'}
+                                >
                                     <h2>{user.name}</h2>
                                     <label>{user.email}</label><br /><br />
                                     <Button onClick={() => startNewChat(id, user._id)}>Start New Chat</Button>
@@ -141,24 +220,38 @@ const chatPage = () => {
                 </div>
                 <div className="chatBox">
                     <h3>Chat Box</h3>
-                    {activeChat._id}
+                    {activeChat._id} <br />
+                    {activeChat.name}
                     <div>
                         <button onClick={activeChatReduxInformation}>Click to test</button>
                     </div>
-                    <div class="messages">
-                        {console.log(findSelectedChat(activeChat._id, id))}
-                        {findSelectedChat(activeChat._id, id)?.messages.map(
-                            (message, index) =>
-                                <div key={index} className={`message ${message.sender === id ? "sender" : "receiver"}`}>
-                                    <p>{message.content}</p>
+                    <div className="messages">
+                        {messages && messages.length > 0 ? (
+                            messages.map((message, index) => (
+                                <div className="messageContainer">
+                                    <div key={index} className={`message${message.sender === id ? "Sender" : "Receiver"}`}>
+                                        <div>
+                                            <b>{findMessageSender(message.sender)}</b>
+                                            <p>{message.content}</p>
+                                        </div>
+                                    </div>
+                                    <div className={message.sender === id ? 'goRight' : 'goLeft'}>
+                                        {formatDate(message.createdAt)}
+                                    </div>
                                 </div>
-                        )
-                        }
+                            ))
+                        ) : (
+                            <div>No messages</div>
+                        )}
+                        <div ref={messagesEndRef} /> {/*Reference to the end of the messages container*/}
                     </div>
-                    <div>
-                        <input type="text" placeholder="Type a message" />
-                        <button>Send</button>
-
+                    <div className="inputContainer">
+                        {isActiveChatInActiveUsers && (
+                            <>
+                                <input type="text" placeholder="Type a message" onChange={e => setMessage(e.target.value)} />
+                                <button onClick={sendNewMessage}>Send</button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

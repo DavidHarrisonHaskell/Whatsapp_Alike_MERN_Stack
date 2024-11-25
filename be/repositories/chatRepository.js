@@ -5,6 +5,14 @@ const createChat = (participants) => {
     const newChat = new chatModel({ participants });
     return newChat.save();
 };
+
+const updateChatUnreadMessagesCount = async (chatId) => {
+    // update unreadMessageCount in the chat document
+    const result = await chatModel.findByIdAndUpdate(chatId, { $inc: { unreadMessagesCount: 1 } }, { new: true });
+    console.log(result);
+    return result
+}
+
 const getAllChats = () => {
     // get all chats
     return chatModel.find({}); // mongoose method to find documents in a collection
@@ -19,6 +27,7 @@ const getChatsByUserId = (userId) => {
 
 module.exports = {
     createChat,
+    updateChatUnreadMessagesCount,
     getChatsByUserId,
     getAllChats
 };
