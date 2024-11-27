@@ -48,7 +48,6 @@ export const addChat = ({ participants }) => async dispatch => {
     }
 }
 
-// TODO: make a sendMessage function
 export const  sendMessage = ({ sender, chatId, content }) => async dispatch => {
     console.log("sender", sender, "chatId", chatId, "content", content);
     dispatch(sendMessageStart());

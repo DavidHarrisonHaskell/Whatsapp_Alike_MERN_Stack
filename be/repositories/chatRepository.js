@@ -25,9 +25,22 @@ const getChatsByUserId = (userId) => {
     //explanation of find method: https://docs.mongodb.com/manual/reference/method/db.collection.find/
 }
 
+const getChatByChatId = (id) => {
+    // get chat by id
+    return chatModel.findById(id); // mongoose method to find a single document by its _id
+}
+
+const clearChatUnreadMessagesCount = (chatId, chat) => {
+    // clear unreadMessageCount in the chat document
+    const updatedChat = { ...chat, unreadMessagesCount: 0 };
+    return chatModel.findByIdAndUpdate(chatId, updatedChat, { new: true });
+}
+
 module.exports = {
     createChat,
     updateChatUnreadMessagesCount,
     getChatsByUserId,
-    getAllChats
+    getAllChats,
+    getChatByChatId,
+    clearChatUnreadMessagesCount
 };

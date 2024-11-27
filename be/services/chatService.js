@@ -39,7 +39,18 @@ const getChatsByUserId = async (userId) => {
     return chatsWithMessages;
 }
 
+const clearUnreadMessages = async (id) => {
+    const chat = await chatRepository.getChatByChatId(id);
+    // clear unread messages count
+    const updatedChat = await chatRepository.clearChatUnreadMessagesCount(chat._id, chat.toObject());
+    // set all messages in that chat to read
+    const updatedMessages = await messageRepository.updateChatMessagesRead(id)
+    // TODO: finish working on this function
+    return { updatedChat: updatedChat, updatedMessages: updatedMessages}
+}
+
 module.exports = {
     createChat,
-    getChatsByUserId
+    getChatsByUserId,
+    clearUnreadMessages
 };
