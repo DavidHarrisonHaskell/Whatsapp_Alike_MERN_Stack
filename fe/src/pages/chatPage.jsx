@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchUserInformation } from "../reducers/usersReducer";
-import { fetchChats, addChat, sendMessage } from "../reducers/chatReducer";
+import { fetchChats, addChat, sendMessage, clearReadMessages } from "../reducers/chatReducer";
 import { useEffect, useState, useRef } from "react";
 import { Button } from 'react-bootstrap'
 import LayoutHeader from '../components/LayoutHeader';
@@ -11,17 +11,17 @@ import moment from 'moment';
 const chatPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [activeChat, setActiveChat] = useState({})
+    const [activeChatParticipant, setActiveChatParticipant] = useState({}) // user informatio of the active chat
     const [currentChat, setCurrentChat] = useState({});
-    const [search, setSearch] = useState('')
-    const id = sessionStorage.getItem('id');
+    const [search, setSearch] = useState('') // for the search bar
+    const id = sessionStorage.getItem('id'); // id of the logged in user
     const initialActiveChatSet = useRef(false)
     const [selectedUserId, setSelectedUserId] = useState(null)
     const [message, setMessage] = useState('');
     const messagesEndRef = useRef(null)
+    const isFirstRender = useRef(true); // Track if it is the first render
 
-    console.log("id", id);
-    console.log("typeof id", typeof (id));
+
     //load redux state
     const usersInformation = useSelector((state) => state.users.items);
     const usersInformationStatus = useSelector((state) => state.users.status);
@@ -46,8 +46,8 @@ const chatPage = () => {
     const usersWithNonActiveChats = usersInformation.filter((user) => {
         return !activeChatUserIds.has(user._id) && user._id !== id;
     });
-    console.log('users with active chats', usersWithActiveChats)
-    console.log('users with non active chats', usersWithNonActiveChats)
+    // console.log('users with active chats', usersWithActiveChats)
+    // console.log('users with non active chats', usersWithNonActiveChats)
 
     useEffect(() => {
         if (usersInformationStatus === 'idle') {
@@ -62,13 +62,13 @@ const chatPage = () => {
 
     useEffect(() => {
         if (usersWithActiveChats.length > 0 && !initialActiveChatSet.current) {
-            setActiveChat(usersWithActiveChats[0])
+            // setActiveChatParticipant(usersWithActiveChats[0])
             initialActiveChatSet.current = true;
-            findSelectedChat(usersWithActiveChats[0]._id, id)
-            setSelectedUserId(usersWithActiveChats[0]._id)
+            // setSelectedUserId(usersWithActiveChats[0]._id)
 
         }
-    }, [usersWithActiveChats, activeChat]);
+        // findSelectedChat(activeChatParticipant._id, id)
+    }, [usersWithActiveChats, activeChatParticipant]);
 
 
     useEffect(() => {
@@ -76,13 +76,38 @@ const chatPage = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [chats, activeChat]);
+    }, [chats, activeChatParticipant]);
 
     const findSelectedChat = (loggedInUser, selectedUser) => {
         const selectedChat = chats.find(chat => {
             return chat.participants.includes(loggedInUser) && chat.participants.includes(selectedUser) && chat.participants.length == 2
         })
         return selectedChat
+    }
+
+    const selectedChat = findSelectedChat(activeChatParticipant?._id, id);
+    const messages = selectedChat?.messages;
+
+    useEffect(() => {
+        // TODO: make a clear the read messages count API call and also update redux state
+        // clear unread messages and set all read fields to true
+        // update 03/12/2024: the dispatch function works I just want to integrate it in the 
+        // useEffect hook instead of through the onClick event
+        if (selectedChat) {
+            console.log("selected Chat: " + JSON.stringify(selectedChat._id), "working")
+            if(isFirstRender.current) {
+                dispatch(clearReadMessages({ selectedChatId: selectedChat._id }))
+                isFirstRender.current = false
+            }
+        }
+    }, [dispatch, selectedChat]);
+
+    const handleDispatchClearReadMessages = () => {
+        console.log("handleDispatchClearReadMessages")
+        console.log("selectedChat", selectedChat)
+        if (selectedChat) {
+            dispatch(clearReadMessages({ selectedChatId: selectedChat._id }))
+        }
     }
 
     const formatDate = (timestamp) => {
@@ -98,8 +123,6 @@ const chatPage = () => {
         return moment(timestamp).format('MMM D, hh:mm A')
     }
 
-    const selectedChat = findSelectedChat(activeChat?._id, id);
-    const messages = selectedChat?.messages;
 
     const findMessageSender = (senderId) => {
         const sender = usersInformation.find(user => user._id === senderId)
@@ -113,9 +136,9 @@ const chatPage = () => {
 
     const activeChatReduxInformation = () => {
         console.log("chats", chats)
-        const information = chats.find(chat => chat._id === activeChat._id)
+        const information = chats.find(chat => chat._id === activeChatParticipant._id)
         console.log("information", information);
-        console.log("activeChat", activeChat)
+        console.log("activeChatParticipant", activeChatParticipant)
         console.log("selectedChat", selectedChat)
         return information
     }
@@ -145,7 +168,7 @@ const chatPage = () => {
         }
 
         dispatch(sendMessage({
-            "sender": activeChat._id,
+            "sender": activeChatParticipant._id,
             "chatId": selectedChat._id,
             "content": message
         }));
@@ -163,8 +186,11 @@ const chatPage = () => {
 
     const filteredUsersWithNonActiveChats = usersWithNonActiveChats.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()));
 
-    const isActiveChatInActiveUsers = usersWithActiveChats.some(user => user._id === activeChat?._id);
+    const isActiveChatInActiveUsers = usersWithActiveChats.some(user => user._id === activeChatParticipant?._id);
 
+    const isEmptyObject = (object) => {
+        return Object.keys(object).length === 0 && object.constructor === Object;
+    }
     return (
         <div className="chatPage">
             <div >
@@ -185,15 +211,16 @@ const chatPage = () => {
                                 <div
                                     key={index}
                                     onClick={() => {
-                                        setActiveChat(user)
+                                        setActiveChatParticipant(user)
                                         setSelectedUserId(user._id)
+                                        handleDispatchClearReadMessages()
                                     }}
                                     className={selectedUserId === user._id ? 'greenBackground' : 'regularBackground'}
                                 >
                                     <h2>{user.name}</h2>
-                                    <label>{user.email}</label><br /><br />
-                                    <p>{`${getLastMessage(user._id).substring(0,30)}...`}</p>
-                                    
+                                    <label className="wrapMessage">{user.email}</label><br /><br />
+                                    <p className="wrapMessage">{getLastMessage(user._id).length <= 30 ? `${getLastMessage(user._id)}` : `${getLastMessage(user._id).substring(0, 30)}...`}</p>
+
                                 </div>)
                         })
                     }
@@ -206,53 +233,64 @@ const chatPage = () => {
                                 <div
                                     key={index}
                                     onClick={() => {
-                                        setActiveChat(user)
+                                        setActiveChatParticipant(user)
                                         setSelectedUserId(user._id)
+                                        handleDispatchClearReadMessages()
                                     }}
                                     className={selectedUserId === user._id ? 'greenBackground' : 'regularBackground'}
                                 >
                                     <h2>{user.name}</h2>
-                                    <label>{user.email}</label><br /><br />
+                                    <label className="wrapMessage">{user.email}</label><br /><br />
                                     <Button onClick={() => startNewChat(id, user._id)}>Start New Chat</Button>
-                                </div>)
+                                </div>
+                            )
                         })
                     }
                 </div>
                 <div className="chatBox">
                     <h3>Chat Box</h3>
-                    {activeChat._id} <br />
-                    {activeChat.name}
-                    <div>
-                        <button onClick={activeChatReduxInformation}>Click to test</button>
-                    </div>
-                    <div className="messages">
-                        {messages && messages.length > 0 ? (
-                            messages.map((message, index) => (
-                                <div className="messageContainer">
-                                    <div key={index} className={`message${message.sender === id ? "Sender" : "Receiver"}`}>
-                                        <div>
-                                            <b>{findMessageSender(message.sender)}</b>
-                                            <p>{message.content}</p>
-                                        </div>
-                                    </div>
-                                    <div className={message.sender === id ? 'goRight' : 'goLeft'}>
-                                        {formatDate(message.createdAt)}
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div>No messages</div>
-                        )}
-                        <div ref={messagesEndRef} /> {/*Reference to the end of the messages container*/}
-                    </div>
-                    <div className="inputContainer">
-                        {isActiveChatInActiveUsers && (
-                            <>
-                                <input type="text" placeholder="Type a message" onChange={e => setMessage(e.target.value)} />
-                                <button onClick={sendNewMessage}>Send</button>
-                            </>
-                        )}
-                    </div>
+                    {activeChatParticipant && !isEmptyObject(activeChatParticipant) ? (
+                        <div>
+                            {console.log("activeChatParticipant", Object.keys(activeChatParticipant).length)}
+                            {activeChatParticipant?._id} <br />
+                            {activeChatParticipant?.name}
+                            <div>
+                                <button onClick={activeChatReduxInformation}>Click to test</button>
+                            </div>
+                            <div className="messages">
+                                {messages && messages.length > 0 ? (
+                                    messages.map((message, index) => {
+                                        return (
+                                            <div className="messageContainer" key={index}>
+                                                <div className={`message${message.sender === id ? "Sender" : "Receiver"}`}>
+                                                    <div>
+                                                        <b>{findMessageSender(message.sender)}</b>
+                                                        <p>{message.content}</p>
+                                                    </div>
+                                                </div>
+                                                <div className={message.sender === id ? 'goRight' : 'goLeft'}>
+                                                    {formatDate(message.createdAt)}
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                ) : (
+                                    <div>No messages</div>
+                                )}
+                                <div ref={messagesEndRef} /> {/*Reference to the end of the messages container*/}
+                            </div>
+                            <div className="inputContainer">
+                                {isActiveChatInActiveUsers && (
+                                    <>
+                                        <input type="text" placeholder="Type a message" onChange={e => setMessage(e.target.value)} />
+                                        <button onClick={sendNewMessage}>Send</button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div>Select a user to start a chat.</div>
+                    )}
                 </div>
             </div>
         </div>

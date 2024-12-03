@@ -48,7 +48,7 @@ export const addChat = ({ participants }) => async dispatch => {
     }
 }
 
-export const  sendMessage = ({ sender, chatId, content }) => async dispatch => {
+export const sendMessage = ({ sender, chatId, content }) => async dispatch => {
     console.log("sender", sender, "chatId", chatId, "content", content);
     dispatch(sendMessageStart());
     try {
@@ -62,6 +62,27 @@ export const  sendMessage = ({ sender, chatId, content }) => async dispatch => {
         dispatch(sendMessageSuccess(response.data));
     } catch (e) {
         dispatch(sendMessageFailure(e.response));
+    }
+}
+
+export const clearReadMessages = ({ selectedChatId }) => async dispatch => {
+    //TODO: finish up this function
+    console.log("working so far before clearing read messages")
+
+    dispatch(clearReadMessagesStart())
+    console.log("working so far after clearing read messages")
+    try {
+        const token = sessionStorage.getItem("token");
+        console.log("token", token);
+        const response = await axios.post(`http://127.0.0.1:5000/chats/clear-unread-messages/${selectedChatId}`,{}, { 
+            headers: {
+                token: token 
+            }
+        });
+        console.log("response.data line 82", response.data)
+        dispatch(clearReadMessagesSuccess(response.data));
+    } catch (e) {
+        dispatch(clearReadMessagesFailure(e.response));
     }
 }
 
@@ -104,12 +125,39 @@ const chatsSlice = createSlice({
                 if (chat) {
                     item.messages.push(action.payload.message);
                 }
-            })            
+            })
             // state.items.push(action.payload.message);
         },
         sendMessageFailure: (state, action) => {
             state.status = "failed";
             console.log("sendMessageFailure", action.payload?.message)
+            state.error = action.payload;
+        },
+        clearReadMessagesStart: (state) => {
+            state.status = "loading";
+        },
+        clearReadMessagesSuccess: (state, action) => {
+            state.status = "succeeded";
+            console.log("action.payload for clearReadMessagesSuccess", action.payload)
+            console.log("state.items before change", JSON.stringify(state.items))
+            state.items = state.items.map(item => {
+                if (item._id === action.payload.updatedChat._id && item.messages) {
+                    return {
+                        ...item,
+                        messages: item.messages.map(message => ({
+                            ...message,
+                            read: true
+                        })),
+                        unreadMessagesCount: 0
+                    }
+                }
+                return item
+            })
+            console.log("state.items after change", state.items)
+        },
+        clearReadMessagesFailure: (state, action) => {
+            state.status = "failed";
+            console.log("clearReadMessagesFailure", action.payload?.message)
             state.error = action.payload;
         }
     }
@@ -125,7 +173,10 @@ export const {
     addChatFailure,
     sendMessageStart,
     sendMessageSuccess,
-    sendMessageFailure
+    sendMessageFailure,
+    clearReadMessagesStart,
+    clearReadMessagesSuccess,
+    clearReadMessagesFailure
 } = chatsSlice.actions;
 
 export default chatsSlice.reducer;

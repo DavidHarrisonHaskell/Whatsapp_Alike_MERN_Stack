@@ -45,7 +45,6 @@ const clearUnreadMessages = async (id) => {
     const updatedChat = await chatRepository.clearChatUnreadMessagesCount(chat._id, chat.toObject());
     // set all messages in that chat to read
     const updatedMessages = await messageRepository.updateChatMessagesRead(id)
-    // TODO: finish working on this function
     return { updatedChat: updatedChat, updatedMessages: updatedMessages}
 }
 

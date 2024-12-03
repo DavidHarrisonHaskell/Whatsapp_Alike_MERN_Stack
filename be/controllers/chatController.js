@@ -41,9 +41,8 @@ router.get('/:id', verifyUser, async (req, res) => {
 })
 
 
-/* TODO: implement following function in frontend */
 
-router.put('/clear-unread-messages/:id', verifyUser, async (req, res) => {
+router.post('/clear-unread-messages/:id', verifyUser, async (req, res) => {
     try {
         const { id } = req.params;
         if (!id) {

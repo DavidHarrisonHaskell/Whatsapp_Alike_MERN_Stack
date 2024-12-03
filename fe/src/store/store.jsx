@@ -1,6 +1,7 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import usersReducer from '../reducers/usersReducer'
 import chatReducer from '../reducers/chatReducer'
+import { thunk } from 'redux-thunk'; // Explicitly importing thunk
 
 const appReducer = combineReducers({
     users: usersReducer,
@@ -8,7 +9,8 @@ const appReducer = combineReducers({
 });
 
 const store = configureStore({
-    reducer: appReducer
+    reducer: appReducer,
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(thunk),
 });
 
 export { store }
