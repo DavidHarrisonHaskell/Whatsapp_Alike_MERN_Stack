@@ -12,16 +12,16 @@ const initialState = {
 
 export const fetchChats = ({ id }) => async dispatch => {
     dispatch(fetchChatsStart());
-    console.log('fetchChatsStart')
+    // console.log('fetchChatsStart')
     try {
         const token = sessionStorage.getItem("token");
-        console.log("token", token);
+        // console.log("token", token);
         const response = await axios.get(`http://127.0.0.1:5000/chats/${id}`, {
             headers: {
                 token: token,
             },
         });
-        console.log("chatReducer:", `http://127.0.0.1:5000/chats/${id}`)
+        // console.log("chatReducer:", `http://127.0.0.1:5000/chats/${id}`)
         dispatch(fetchChatsSuccess(response.data));
     }
     catch (error) {
@@ -34,7 +34,7 @@ export const addChat = ({ participants }) => async dispatch => {
     const the_participants = participants
     console.log("participants", participants);
     try {
-        console.log("all is good...")
+        // console.log("all is good...")
         const token = sessionStorage.getItem('token')
         const response = await axios.post('http://127.0.0.1:5000/chats/new-chat', { "participants": the_participants }, {
             headers: {
@@ -118,13 +118,18 @@ const chatsSlice = createSlice({
         },
         sendMessageSuccess: (state, action) => {
             state.status = "succeeded";
-            state.items.find(item => {
+            state.items = state.items.map(item => {
                 const chat = item._id === action.payload.message.chatId;
                 console.log("item", item, "chat", chat)
                 console.log("item._id", item._id, "action.payload.message.chatId", action.payload.message.chatId)
                 if (chat) {
                     item.messages.push(action.payload.message);
+                    item = {
+                        ...item,
+                        unreadMessagesCount: item.unreadMessagesCount + 1
+                    }
                 }
+                return item;
             })
             // state.items.push(action.payload.message);
         },
@@ -139,7 +144,7 @@ const chatsSlice = createSlice({
         clearReadMessagesSuccess: (state, action) => {
             state.status = "succeeded";
             console.log("action.payload for clearReadMessagesSuccess", action.payload)
-            console.log("state.items before change", JSON.stringify(state.items))
+            console.log("state.items before change", state.items)
             state.items = state.items.map(item => {
                 if (item._id === action.payload.updatedChat._id && item.messages) {
                     return {

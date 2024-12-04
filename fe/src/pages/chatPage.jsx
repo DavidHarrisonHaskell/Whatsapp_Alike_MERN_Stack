@@ -94,18 +94,36 @@ const chatPage = () => {
         // update 03/12/2024: the dispatch function works I just want to integrate it in the 
         // useEffect hook instead of through the onClick event
         if (selectedChat) {
-            console.log("selected Chat: " + JSON.stringify(selectedChat._id), "working")
-            if(isFirstRender.current) {
+            if (isFirstRender.current) { // first render
+                // if the last message is sent by the id of the logged on user then do
+                // not dispatch the clearReadMessages
+                console.log("selected Chat: " + JSON.stringify(selectedChat), "working")
+                const lastMessage = selectedChat.messages[selectedChat.messages.length - 1]
+                console.log("lastMessageSender: " + JSON.stringify(lastMessage.sender), "lastMessageSender type", typeof (lastMessage.sender))
+                console.log("id", id, "id type", typeof (id))
+                if (JSON.stringify(lastMessage.sender) === JSON.stringify(id)) {
+                    console.log("lastMessage.sender: " + lastMessage.sender, "id", id)
+                    return;
+                }
+                console.log("DISPATCH 1")
                 dispatch(clearReadMessages({ selectedChatId: selectedChat._id }))
                 isFirstRender.current = false
             }
         }
     }, [dispatch, selectedChat]);
 
-    const handleDispatchClearReadMessages = () => {
-        console.log("handleDispatchClearReadMessages")
-        console.log("selectedChat", selectedChat)
+    const handleDispatchClearReadMessages = (userId) => {
+        // console.log("handleDispatchClearReadMessages")
+
         if (selectedChat) {
+            const lastMessage = selectedChat.messages[selectedChat.messages.length - 1]
+            console.log("lastMessage - handleDispatchClearReadMessages: " + JSON.stringify(lastMessage.sender))
+            console.log("id - handleDispatchClearReadMessages", id,)
+            if (JSON.stringify(lastMessage.sender) === JSON.stringify(id)) {
+                console.log("lastMessage.sender - handleDispatchClearReadMessages: " + lastMessage.sender, "id", id)
+                return;
+            }
+            console.log("DISPATCH 2")
             dispatch(clearReadMessages({ selectedChatId: selectedChat._id }))
         }
     }
@@ -168,7 +186,7 @@ const chatPage = () => {
         }
 
         dispatch(sendMessage({
-            "sender": activeChatParticipant._id,
+            "sender": id,
             "chatId": selectedChat._id,
             "content": message
         }));
@@ -179,9 +197,22 @@ const chatPage = () => {
     const getLastMessage = (userId) => {
         const chat = chats.find(chat => chat.participants.includes(userId) && chat.participants.includes(id) && chat.participants.length === 2);
         if (chat && chat.messages && chat.messages.length > 0) {
-            return chat.messages[chat.messages.length - 1].content;
+            return chat.messages[chat.messages.length - 1];
         }
         return "No messages";
+    };
+
+    const getUnreadMessagesCount = (userId) => {
+        const chat = chats.find(chat => chat.participants.includes(userId) && chat.participants.includes(id) && chat.participants.length === 2);
+        if (chat && chat.messages && chat.messages.length > 0) {
+            // TODO: if last message sender is the same id as the user logged in, return 0
+            if (chat.messages[chat.messages.length - 1].sender === id) {
+                return 0;
+            }
+            console.log("working getUnreadMessagesCount", chat.unreadMessagesCount);
+            return chat.unreadMessagesCount
+        }
+        return 0;
     };
 
     const filteredUsersWithNonActiveChats = usersWithNonActiveChats.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()));
@@ -191,6 +222,7 @@ const chatPage = () => {
     const isEmptyObject = (object) => {
         return Object.keys(object).length === 0 && object.constructor === Object;
     }
+
     return (
         <div className="chatPage">
             <div >
@@ -213,13 +245,15 @@ const chatPage = () => {
                                     onClick={() => {
                                         setActiveChatParticipant(user)
                                         setSelectedUserId(user._id)
-                                        handleDispatchClearReadMessages()
+                                        handleDispatchClearReadMessages(user._id)
                                     }}
                                     className={selectedUserId === user._id ? 'greenBackground' : 'regularBackground'}
                                 >
                                     <h2>{user.name}</h2>
+                                    {getUnreadMessagesCount(user._id) == 1 && <label className="unreadMessagesLabel">{`${getUnreadMessagesCount(user._id)} unread message`}</label>}
+                                    {getUnreadMessagesCount(user._id) > 1 && <label className="unreadMessagesLabel">{`${getUnreadMessagesCount(user._id)} unread messages`}</label>}
                                     <label className="wrapMessage">{user.email}</label><br /><br />
-                                    <p className="wrapMessage">{getLastMessage(user._id).length <= 30 ? `${getLastMessage(user._id)}` : `${getLastMessage(user._id).substring(0, 30)}...`}</p>
+                                    <p className="wrapMessage">{getLastMessage(user._id).content.length <= 30 ? `${getLastMessage(user._id).content}` : `${getLastMessage(user._id).content.substring(0, 30)}...`}</p>
 
                                 </div>)
                         })
@@ -263,9 +297,14 @@ const chatPage = () => {
                                         return (
                                             <div className="messageContainer" key={index}>
                                                 <div className={`message${message.sender === id ? "Sender" : "Receiver"}`}>
-                                                    <div>
+                                                    <div className="messageContainerContent">
                                                         <b>{findMessageSender(message.sender)}</b>
                                                         <p>{message.content}</p>
+                                                        {message.sender === id && message.read && (
+                                                            <span className="check" style={{ color: 'blue' }}>
+                                                                &#10004;
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className={message.sender === id ? 'goRight' : 'goLeft'}>

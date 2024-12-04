@@ -15,10 +15,10 @@ const initialState = {
 
 export const fetchUserInformation = () => async dispatch => {
     dispatch(fetchUsersStart());
-    console.log('fetchUsersStart')
+    // console.log('fetchUsersStart')
     try {
         const token = sessionStorage.getItem("token");
-        console.log("token", token);
+        // console.log("token", token);
         const response = await axios.get(`http://127.0.0.1:5000/users/`, {
             headers: {
                 token: token,
@@ -39,10 +39,10 @@ const userSlice = createSlice({
             state.status = "loading";
         },
         fetchUsersSuccess: (state, action) => {
-            console.log("state before fetchUsersStart", state.items)
+            // console.log("state before fetchUsersStart", state.items)
             state.status = "succeeded";
             state.items = action.payload.users;
-            console.log("state after fetchUsersStart", state.items)
+            // console.log("state after fetchUsersStart", state.items)
         },
         fetchUsersFailure: (state, action) => {
             state.status = "failed";

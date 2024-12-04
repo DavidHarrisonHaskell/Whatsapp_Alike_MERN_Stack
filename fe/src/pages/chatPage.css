@@ -74,11 +74,13 @@
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
+
 .wrapMessage {
     word-wrap: break-word;
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
+
 .messageSender {
     background-color: #d4edda;
     /* Light green background */
@@ -89,9 +91,9 @@
     max-width: 60%;
     display: flex;
     flex-direction: column;
-    word-wrap: break-word;
+    /* word-wrap: break-word;
     overflow-wrap: break-word;
-    white-space: pre-wrap;
+    white-space: pre-wrap; */
 
 }
 
@@ -109,9 +111,9 @@
     max-width: 60%;
     display: flex;
     flex-direction: column;
-    word-wrap: break-word;
+    /* word-wrap: break-word;
     overflow-wrap: break-word;
-    white-space: pre-wrap;
+    white-space: pre-wrap; */
 }
 
 .messageReceiver div {
@@ -159,4 +161,30 @@
 
 .inputContainer button {
     flex-shrink: 0;
+}
+
+.unreadMessagesLabel {
+    background-color: blue;
+    border-radius: 10px;
+    width: 100%;
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.messageContainerContent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-left: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.check {
+    margin-left: auto;
 }
