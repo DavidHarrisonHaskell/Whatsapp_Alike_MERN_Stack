@@ -42,6 +42,21 @@ const chatPage = () => {
         return activeChats.some((chat) => chat.participants.includes(user._id) && user._id !== id);
         // if they have an active chat, include that user in the filtered users list
     })
+    // sort userswithActiveChats based on the chat that has the most recent last message
+
+    // Sort users with active chats based on the last message timestamp
+    const getLastMessageTimestamp = (userId) => {
+        const chat = chats.find(chat => chat.participants.includes(userId) && chat.participants.includes(id));
+        if (chat && chat.messages && chat.messages.length > 0) {
+            return new Date(chat.messages[chat.messages.length - 1].createdAt).getTime();
+        }
+        return 0;
+    };
+
+    const sortedUsersWithActiveChats = [...usersWithActiveChats].sort((a, b) => {
+        return getLastMessageTimestamp(b._id) - getLastMessageTimestamp(a._id);
+    });
+
     const activeChatUserIds = new Set(activeChats.flatMap(chat => chat.participants));
     const usersWithNonActiveChats = usersInformation.filter((user) => {
         return !activeChatUserIds.has(user._id) && user._id !== id;
@@ -238,7 +253,7 @@ const chatPage = () => {
                     <input type="text" id="search" name="search" onChange={(e) => setSearch(e.target.value)} style={{ marginRight: "2%" }} /><br />
                     <u>Users - Active Chats</u>
                     {
-                        usersWithActiveChats.map((user, index) => {
+                        sortedUsersWithActiveChats.map((user, index) => {
                             return (
                                 <div
                                     key={index}
@@ -253,7 +268,7 @@ const chatPage = () => {
                                     {getUnreadMessagesCount(user._id) == 1 && <label className="unreadMessagesLabel">{`${getUnreadMessagesCount(user._id)} unread message`}</label>}
                                     {getUnreadMessagesCount(user._id) > 1 && <label className="unreadMessagesLabel">{`${getUnreadMessagesCount(user._id)} unread messages`}</label>}
                                     <label className="wrapMessage">{user.email}</label><br /><br />
-                                    <p className="wrapMessage">{getLastMessage(user._id).content.length <= 30 ? `${getLastMessage(user._id).content}` : `${getLastMessage(user._id).content.substring(0, 30)}...`}</p>
+                                    <p className="wrapMessage">{getLastMessage(user._id)?.content?.length <= 30 ? `${getLastMessage(user._id)?.content}` : `${getLastMessage(user._id)?.content?.substring(0, 30)}...`}</p>
 
                                 </div>)
                         })

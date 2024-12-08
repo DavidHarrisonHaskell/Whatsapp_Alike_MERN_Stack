@@ -28,7 +28,7 @@ const createChat = async (participants) => {
 const getChatsByUserId = async (userId) => {
     const chats = await chatRepository.getChatsByUserId(userId);
     // console.log("chats:", chats);
-    console.log(chats);
+    // console.log(chats);
     const chatsWithMessages = await Promise.all(chats.map(async (chat) => {
         const messages = await messageRepository.getMessagesByChatId(chat._id);
         return {
