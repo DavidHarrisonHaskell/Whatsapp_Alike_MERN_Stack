@@ -7,6 +7,7 @@ import { Button } from 'react-bootstrap'
 import LayoutHeader from '../components/LayoutHeader';
 import "./chatPage.css";
 import moment from 'moment';
+import { io } from 'socket.io-client'
 
 const chatPage = () => {
     const dispatch = useDispatch();
@@ -20,6 +21,23 @@ const chatPage = () => {
     const [message, setMessage] = useState('');
     const messagesEndRef = useRef(null)
     const isFirstRender = useRef(true); // Track if it is the first render
+
+    const socket = io('http://localhost:5000')
+    useEffect(() => {
+        socket.on('connect', () => {
+            console.log('Connected to the server')
+        })
+        // socket.on('disconnect', () => {
+        //   console.log('Disconnected from the server')
+        // }) 
+        // socket.emit('send-message-all-clients', {
+        //   text: 'All clients connected Bro'
+        // })
+        // socket.on('send-message-by-server', data => {
+        //   console.log(data)
+        // })
+        socket.emit('join-room', id)
+    }, [])
 
 
     //load redux state

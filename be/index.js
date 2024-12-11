@@ -34,10 +34,17 @@ io.on('connection', (socket) => {
     // Handle user disconnection
     socket.on('disconnect', () => {
         console.log('User disconnected', socket.id);
-    }); 
+    });
 
-    socket.on('send-message-all-clients', ({text}) => {
-        console.log(text)
+    socket.on('send-message-all-clients', ({ text }) => {
+        // console.log(text)
+        // send to all clients
+        socket.emit('send-message-by-server', `Message from server: ${text}`);
+    })
+
+    socket.on('join-room', (userId) => {
+        socket.join(userId);
+        console.log(`User ${userId} joined room`);
     })
 
     //     // Handle user sending a message
