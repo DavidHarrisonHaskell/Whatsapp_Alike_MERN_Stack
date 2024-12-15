@@ -36,10 +36,13 @@ const chatPage = () => {
         // socket.on('send-message-by-server', data => {
         //   console.log(data)
         // })
-        socket.emit('join-room', id)
-    }, [])
+        if (id) {
+            socket.emit('join-room', id)
+        }
+        
+    }, [id])
 
-
+    
     //load redux state
     const usersInformation = useSelector((state) => state.users.items);
     const usersInformationStatus = useSelector((state) => state.users.status);
@@ -49,7 +52,9 @@ const chatPage = () => {
     const chatsStatus = useSelector((state) => state.chats.status);
     const chatsError = useSelector((state) => state.chats.error);
 
-
+    const testSendMessage = () => {
+        
+    }
     const loggedInUserInformation = usersInformation.find((user) => user._id === id);
     // users with active chats:
     // find them by filtering all users by those 
@@ -122,7 +127,6 @@ const chatPage = () => {
     const messages = selectedChat?.messages;
 
     useEffect(() => {
-        // TODO: make a clear the read messages count API call and also update redux state
         // clear unread messages and set all read fields to true
         // update 03/12/2024: the dispatch function works I just want to integrate it in the 
         // useEffect hook instead of through the onClick event
@@ -130,19 +134,30 @@ const chatPage = () => {
             if (isFirstRender.current) { // first render
                 // if the last message is sent by the id of the logged on user then do
                 // not dispatch the clearReadMessages
-                console.log("selected Chat: " + JSON.stringify(selectedChat), "working")
-                const lastMessage = selectedChat.messages[selectedChat.messages.length - 1]
-                console.log("lastMessageSender: " + JSON.stringify(lastMessage.sender), "lastMessageSender type", typeof (lastMessage.sender))
-                console.log("id", id, "id type", typeof (id))
-                if (JSON.stringify(lastMessage.sender) === JSON.stringify(id)) {
-                    console.log("lastMessage.sender: " + lastMessage.sender, "id", id)
+                // console.log("selected Chat: " + JSON.stringify(selectedChat), "working")
+                const lastMessage = selectedChat?.messages[selectedChat?.messages?.length - 1]
+                // console.log("lastMessageSender: " + JSON.stringify(lastMessage?.sender), "lastMessageSender type", typeof (lastMessage?.sender))
+                // console.log("id", id, "id type", typeof (id))
+                if (JSON.stringify(lastMessage?.sender) === JSON.stringify(id)) {
+                    // console.log("lastMessage.sender: " + lastMessage.sender, "id", id)
                     return;
                 }
-                console.log("DISPATCH 1")
+                // console.log("DISPATCH 1")
                 dispatch(clearReadMessages({ selectedChatId: selectedChat._id }))
                 isFirstRender.current = false
             }
+            
         }
+        socket.on('receive-message', (data) => {
+            console.log("message received from the server: ", data)
+            // TODO: continue working on this function. Only update the redux state but not the datbase.
+            // Why? Since if a message is received from the server then that means that the
+            // server has received the message and has added it to the redux state
+            // but the client has not yet received it.
+            // So, if we want to update the state of the client, we need to dispatch the action
+            // to the redux store.
+        }) 
+
     }, [dispatch, selectedChat]);
 
     const handleDispatchClearReadMessages = (userId) => {
@@ -150,13 +165,13 @@ const chatPage = () => {
 
         if (selectedChat) {
             const lastMessage = selectedChat.messages[selectedChat.messages.length - 1]
-            console.log("lastMessage - handleDispatchClearReadMessages: " + JSON.stringify(lastMessage.sender))
-            console.log("id - handleDispatchClearReadMessages", id,)
+            // console.log("lastMessage - handleDispatchClearReadMessages: " + JSON.stringify(lastMessage.sender))
+            // console.log("id - handleDispatchClearReadMessages", id,)
             if (JSON.stringify(lastMessage.sender) === JSON.stringify(id)) {
-                console.log("lastMessage.sender - handleDispatchClearReadMessages: " + lastMessage.sender, "id", id)
+                // console.log("lastMessage.sender - handleDispatchClearReadMessages: " + lastMessage.sender, "id", id)
                 return;
             }
-            console.log("DISPATCH 2")
+            // console.log("DISPATCH 2")
             dispatch(clearReadMessages({ selectedChatId: selectedChat._id }))
         }
     }
@@ -186,15 +201,17 @@ const chatPage = () => {
     };
 
     const activeChatReduxInformation = () => {
-        console.log("chats", chats)
+        // console.log("chats", chats)
         const information = chats.find(chat => chat._id === activeChatParticipant._id)
-        console.log("information", information);
-        console.log("activeChatParticipant", activeChatParticipant)
-        console.log("selectedChat", selectedChat)
+        // console.log("information", information);
+        // console.log("activeChatParticipant", activeChatParticipant)
+        // console.log("selectedChat", selectedChat)
         return information
     }
 
     const startNewChat = (currentUserId, otherUserId) => {
+        //TODO: update the chat messages redux state once first message is sent or received. doesn't work
+        // properly when a new chat is started and then after that a message is sent from tht logged in user
         console.log('starting new chat', currentUserId, otherUserId);
         // trim the currentUserId and the otherUserId
         // and create a new chat between them
@@ -218,6 +235,19 @@ const chatPage = () => {
             return;
         }
 
+        const socketMessageData = {
+            "sender": id,
+            "chatId": selectedChat._id,
+            "content": message,
+            "read": false,
+            "createdAt": new Date(),
+            "members": chats.find(chat => chat._id === selectedChat._id).participants
+        }
+        // console.log(socketMessageData);
+
+        socket.emit('send-message', socketMessageData)
+
+
         dispatch(sendMessage({
             "sender": id,
             "chatId": selectedChat._id,
@@ -238,11 +268,10 @@ const chatPage = () => {
     const getUnreadMessagesCount = (userId) => {
         const chat = chats.find(chat => chat.participants.includes(userId) && chat.participants.includes(id) && chat.participants.length === 2);
         if (chat && chat.messages && chat.messages.length > 0) {
-            // TODO: if last message sender is the same id as the user logged in, return 0
             if (chat.messages[chat.messages.length - 1].sender === id) {
                 return 0;
             }
-            console.log("working getUnreadMessagesCount", chat.unreadMessagesCount);
+            // console.log("working getUnreadMessagesCount", chat.unreadMessagesCount);
             return chat.unreadMessagesCount
         }
         return 0;
@@ -318,7 +347,7 @@ const chatPage = () => {
                     <h3>Chat Box</h3>
                     {activeChatParticipant && !isEmptyObject(activeChatParticipant) ? (
                         <div>
-                            {console.log("activeChatParticipant", Object.keys(activeChatParticipant).length)}
+                            {/* {console.log("activeChatParticipant", Object.keys(activeChatParticipant).length)} */}
                             {activeChatParticipant?._id} <br />
                             {activeChatParticipant?.name}
                             <div>
@@ -354,8 +383,9 @@ const chatPage = () => {
                             <div className="inputContainer">
                                 {isActiveChatInActiveUsers && (
                                     <>
-                                        <input type="text" placeholder="Type a message" onChange={e => setMessage(e.target.value)} />
+                                        <input type="text" placeholder="Type a message" value={message} onChange={e => setMessage(e.target.value)} />
                                         <button onClick={sendNewMessage}>Send</button>
+                                        <button onClick={testSendMessage}>Test Send Message</button>
                                     </>
                                 )}
                             </div>

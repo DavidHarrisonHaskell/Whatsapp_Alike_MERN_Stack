@@ -10,6 +10,7 @@ const Login = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const login = async () => {
+        console.log("working...")
         try {
             const response = await axios.post(login_URL, {
                 email: email,

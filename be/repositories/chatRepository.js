@@ -9,7 +9,7 @@ const createChat = (participants) => {
 const updateChatUnreadMessagesCount = async (chatId) => {
     // update unreadMessageCount in the chat document
     const result = await chatModel.findByIdAndUpdate(chatId, { $inc: { unreadMessagesCount: 1 } }, { new: true });
-    console.log(result);
+    // console.log(result);
     return result
 }
 

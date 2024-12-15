@@ -49,7 +49,7 @@ export const addChat = ({ participants }) => async dispatch => {
 }
 
 export const sendMessage = ({ sender, chatId, content }) => async dispatch => {
-    console.log("sender", sender, "chatId", chatId, "content", content);
+    // console.log("sender", sender, "chatId", chatId, "content", content);
     dispatch(sendMessageStart());
     try {
         const token = sessionStorage.getItem("token");
@@ -58,7 +58,7 @@ export const sendMessage = ({ sender, chatId, content }) => async dispatch => {
                 token: token,
             },
         });
-        console.log("response.data for sendMessage", response.data)
+        // console.log("response.data for sendMessage", response.data)
         dispatch(sendMessageSuccess(response.data));
     } catch (e) {
         dispatch(sendMessageFailure(e.response));
@@ -120,8 +120,8 @@ const chatsSlice = createSlice({
             state.status = "succeeded";
             state.items = state.items.map(item => {
                 const chat = item._id === action.payload.message.chatId;
-                console.log("item", item, "chat", chat)
-                console.log("item._id", item._id, "action.payload.message.chatId", action.payload.message.chatId)
+                // console.log("item", item, "chat", chat)
+                // console.log("item._id", item._id, "action.payload.message.chatId", action.payload.message.chatId)
                 if (chat) {
                     item.messages.push(action.payload.message);
                     item = {
@@ -135,7 +135,7 @@ const chatsSlice = createSlice({
         },
         sendMessageFailure: (state, action) => {
             state.status = "failed";
-            console.log("sendMessageFailure", action.payload?.message)
+            // console.log("sendMessageFailure", action.payload?.message)
             state.error = action.payload;
         },
         clearReadMessagesStart: (state) => {
@@ -143,8 +143,8 @@ const chatsSlice = createSlice({
         },
         clearReadMessagesSuccess: (state, action) => {
             state.status = "succeeded";
-            console.log("action.payload for clearReadMessagesSuccess", action.payload)
-            console.log("state.items before change", state.items)
+            // console.log("action.payload for clearReadMessagesSuccess", action.payload)
+            // console.log("state.items before change", state.items)
             state.items = state.items.map(item => {
                 if (item._id === action.payload.updatedChat._id && item.messages) {
                     return {

@@ -47,6 +47,15 @@ io.on('connection', (socket) => {
         console.log(`User ${userId} joined room`);
     })
 
+    socket.on('send-message', (data) => {
+        // console.log(`Sent ${data.content} to ${recipient}`);
+        console.log("message arrived at server", data);
+        io
+        .to(data.members[0])
+        .to(data.members[1])
+        .emit('receive-message', data)
+    })
+
     //     // Handle user sending a message
     //     socket.on('sendMessage', (message) => {
     //         console.log(`User ${message.userId} sent message: ${message.text}`);
