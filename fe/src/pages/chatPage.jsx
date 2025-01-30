@@ -158,7 +158,8 @@ const chatPage = () => {
             // to the redux store.
         }) 
 
-    }, [dispatch, selectedChat]);
+    }, [dispatch, selectedChat]); 
+
 
     const handleDispatchClearReadMessages = (userId) => {
         // console.log("handleDispatchClearReadMessages")
